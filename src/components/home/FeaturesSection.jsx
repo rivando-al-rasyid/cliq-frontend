@@ -2,7 +2,7 @@ import { Zap, PencilLine, Users } from "lucide-react";
 
 function FeaturesSection() {
   return (
-    <section className="bg-base-300">
+    <section id="features" className="bg-base-300">
       <div className="mx-auto max-w-7xl px-5 py-24">
         <p className="text-sm font-bold uppercase tracking-[0.25em] text-primary">
           Architectural Features

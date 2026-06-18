@@ -1,13 +1,58 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Link as LinkIcon } from "lucide-react";
 
+import { isAuthenticated, rememberPendingUrl } from "../../utils/auth";
+import { showAuthRequiredAlert } from "../../utils/sweetAlert";
+
 function HeroSection() {
+  const navigate = useNavigate();
   const [url, setUrl] = useState("");
+
+  const goToCreateLink = () => {
+    navigate("/dashboard/create", {
+      state: {
+        destinationUrl: url.trim(),
+      },
+    });
+  };
+
+  const requireAccountFirst = async () => {
+    if (url.trim()) {
+      rememberPendingUrl(url.trim());
+    }
+
+    const result = await showAuthRequiredAlert();
+    const redirectTo = encodeURIComponent("/dashboard/create");
+
+    if (result.isConfirmed) {
+      navigate(`/auth/register?redirectTo=${redirectTo}`);
+      return;
+    }
+
+    if (result.isDenied) {
+      navigate(`/auth/login?redirectTo=${redirectTo}`);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    console.log("URL to shorten:", url);
+    if (isAuthenticated()) {
+      goToCreateLink();
+      return;
+    }
+
+    requireAccountFirst();
+  };
+
+  const handleGetStarted = () => {
+    if (isAuthenticated()) {
+      navigate("/dashboard/create");
+      return;
+    }
+
+    requireAccountFirst();
   };
 
   return (
@@ -23,10 +68,15 @@ function HeroSection() {
       </p>
 
       <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-        <button className="btn btn-primary px-8">Get Started</button>
-        <button className="btn btn-outline border-base-300 px-8 text-primary hover:border-primary hover:bg-primary hover:text-primary-content">
-          Learn More
+        <button type="button" onClick={handleGetStarted} className="btn btn-primary px-8">
+          Get Started
         </button>
+        <a
+          href="#features"
+          className="btn btn-outline border-base-300 px-8 text-primary hover:border-primary hover:bg-primary hover:text-primary-content"
+        >
+          Learn More
+        </a>
       </div>
 
       <form
@@ -43,6 +93,7 @@ function HeroSection() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://very-long-architectural-url.com/asset-id-99238-x1"
               className="grow text-sm text-base-content placeholder:text-base-content/30"
+              required
             />
           </label>
 
