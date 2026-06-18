@@ -1,14 +1,17 @@
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useLocation, useNavigate } from "react-router";
 import { Plus, UserRound } from "lucide-react";
+
+import { clearAccessToken, isAuthenticated } from "../utils/auth";
 
 function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const isAuth = Boolean(localStorage.getItem("accessToken"));
+  const isAuth = isAuthenticated();
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    navigate("/login");
+    clearAccessToken();
+    navigate("/auth/login", { replace: true });
   };
 
   return (
@@ -25,7 +28,8 @@ function Header() {
             <ul className="menu menu-horizontal gap-4 px-1 text-sm font-medium">
               <li>
                 <NavLink
-                  to="/"
+                  to="/dashboard"
+                  end
                   className={({ isActive }) =>
                     isActive
                       ? "rounded-none border-b-2 border-primary text-primary"
@@ -38,27 +42,27 @@ function Header() {
 
               <li>
                 <NavLink
-                  to="/analytics"
+                  to="/dashboard/create"
                   className={({ isActive }) =>
                     isActive
                       ? "rounded-none border-b-2 border-primary text-primary"
                       : "text-base-content/60 hover:text-primary"
                   }
                 >
-                  Analytics
+                  Create
                 </NavLink>
               </li>
 
               <li>
                 <NavLink
-                  to="/links"
+                  to="/dashboard/profile"
                   className={({ isActive }) =>
                     isActive
                       ? "rounded-none border-b-2 border-primary text-primary"
                       : "text-base-content/60 hover:text-primary"
                   }
                 >
-                  Links
+                  Profile
                 </NavLink>
               </li>
             </ul>
@@ -68,14 +72,21 @@ function Header() {
         <div className="navbar-end gap-4">
           {isAuth ? (
             <>
-              <button className="btn btn-primary btn-sm hidden gap-2 shadow-md sm:inline-flex">
+              <NavLink
+                to="/dashboard/create"
+                className="btn btn-primary btn-sm hidden gap-2 shadow-md sm:inline-flex"
+              >
                 <Plus className="h-4 w-4" />
                 Create New Link
-              </button>
+              </NavLink>
 
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <NavLink
+                to="/dashboard/profile"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary"
+                aria-label="Open profile"
+              >
                 <UserRound className="h-5 w-5" />
-              </div>
+              </NavLink>
 
               <button
                 type="button"
@@ -88,13 +99,20 @@ function Header() {
           ) : (
             <>
               <NavLink
-                to="/auth/login"
+                to={`/auth/login?redirectTo=${encodeURIComponent(
+                  location.pathname === "/" ? "/dashboard" : location.pathname,
+                )}`}
                 className="btn btn-ghost btn-sm text-base-content/60"
               >
                 Login
               </NavLink>
 
-              <NavLink to="/auth/register" className="btn btn-primary btn-sm">
+              <NavLink
+                to={`/auth/register?redirectTo=${encodeURIComponent(
+                  location.pathname === "/" ? "/dashboard" : location.pathname,
+                )}`}
+                className="btn btn-primary btn-sm"
+              >
                 Register
               </NavLink>
             </>
