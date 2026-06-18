@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Form, Link, useActionData, useNavigation } from "react-router";
+import { Form, Link, useActionData, useNavigation, useSearchParams } from "react-router";
+
+import { getSafeRedirectPath, takeFlashMessage } from "../utils/auth";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [infoMessage, setInfoMessage] = useState("");
+  const [searchParams] = useSearchParams();
+
+  const redirectTo = getSafeRedirectPath(searchParams.get("redirectTo"), "/dashboard");
 
   const actionData = useActionData();
   const navigation = useNavigation();
 
   const isSubmitting = navigation.state === "submitting";
+
+  useEffect(() => {
+    const registerMessage = takeFlashMessage("register");
+
+    if (registerMessage || searchParams.get("registered") === "1") {
+      setInfoMessage(registerMessage || "Account created. Please log in to continue.");
+    }
+  }, [searchParams]);
 
   return (
     <section className="w-full max-w-md">
@@ -26,6 +40,12 @@ function LoginPage() {
             Please enter your details to sign in.
           </p>
         </div>
+
+        {infoMessage && (
+          <div className="alert alert-success mt-6 rounded-lg text-sm">
+            {infoMessage}
+          </div>
+        )}
 
         {actionData?.error && (
           <div className="alert alert-error mt-6 rounded-lg text-sm">
@@ -118,7 +138,7 @@ function LoginPage() {
       <p className="mt-10 text-center text-sm text-base-content/70">
         Don't have an account?{" "}
         <Link
-          to="/auth/register"
+          to={`/auth/register?redirectTo=${encodeURIComponent(redirectTo)}`}
           className="font-bold text-primary hover:underline"
         >
           Sign up

@@ -1,27 +1,18 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Form, useActionData, useNavigate, useNavigation } from "react-router";
 import { Link as LinkIcon } from "lucide-react";
 
 import { isAuthenticated, rememberPendingUrl } from "../../utils/auth";
-import { showAuthRequiredAlert } from "../../utils/sweetAlert";
+import { showAuthRequiredAlert, showToast } from "../../utils/sweetAlert";
 
 function HeroSection() {
   const navigate = useNavigate();
-  const [url, setUrl] = useState("");
+  const actionData = useActionData();
+  const navigation = useNavigation();
 
-  const goToCreateLink = () => {
-    navigate("/dashboard/create", {
-      state: {
-        destinationUrl: url.trim(),
-      },
-    });
-  };
+  const isSubmitting = navigation.state === "submitting";
 
   const requireAccountFirst = async () => {
-    if (url.trim()) {
-      rememberPendingUrl(url.trim());
-    }
-
     const result = await showAuthRequiredAlert();
     const redirectTo = encodeURIComponent("/dashboard/create");
 
@@ -35,17 +26,6 @@ function HeroSection() {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (isAuthenticated()) {
-      goToCreateLink();
-      return;
-    }
-
-    requireAccountFirst();
-  };
-
   const handleGetStarted = () => {
     if (isAuthenticated()) {
       navigate("/dashboard/create");
@@ -54,6 +34,17 @@ function HeroSection() {
 
     requireAccountFirst();
   };
+
+  useEffect(() => {
+    if (actionData?.error) {
+      showToast(actionData.error, "error");
+    }
+
+    if (actionData?.authRequired) {
+      rememberPendingUrl(actionData.destinationUrl);
+      requireAccountFirst();
+    }
+  }, [actionData]);
 
   return (
     <section className="mx-auto flex max-w-7xl flex-col items-center px-5 py-24 text-center md:py-32">
@@ -79,8 +70,8 @@ function HeroSection() {
         </a>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
+      <Form
+        method="post"
         className="mt-16 w-full max-w-3xl rounded-2xl bg-base-100 p-3 shadow-xl ring-1 ring-base-300"
       >
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -89,17 +80,18 @@ function HeroSection() {
 
             <input
               type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              name="destinationUrl"
               placeholder="https://very-long-architectural-url.com/asset-id-99238-x1"
               className="grow text-sm text-base-content placeholder:text-base-content/30"
               required
             />
           </label>
 
-          <button className="btn btn-primary px-8">Shorten</button>
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary px-8">
+            {isSubmitting ? "Checking..." : "Shorten"}
+          </button>
         </div>
-      </form>
+      </Form>
     </section>
   );
 }

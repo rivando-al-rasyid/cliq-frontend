@@ -1,10 +1,24 @@
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Form, Link, useActionData, useNavigation } from "react-router";
+import {
+  Form,
+  Link,
+  useActionData,
+  useNavigation,
+  useSearchParams,
+} from "react-router";
+
+import { getSafeRedirectPath } from "../utils/auth";
 
 function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  const redirectTo = getSafeRedirectPath(
+    searchParams.get("redirectTo"),
+    "/dashboard",
+  );
 
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -19,12 +33,13 @@ function RegisterPage() {
 
       <Form
         method="post"
+        action={`/auth/register?redirectTo=${encodeURIComponent(redirectTo)}`}
         className="mt-10 rounded-lg border border-base-300 bg-base-100 p-8 shadow-xl shadow-base-300/40"
       >
         <div>
           <h2 className="text-3xl font-black tracking-tight">Create Account</h2>
           <p className="mt-2 text-base text-base-content/70">
-            Please enter your details to create an account.
+            Fill in your details to get started.
           </p>
         </div>
 
@@ -59,6 +74,7 @@ function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="••••••••"
+                minLength={6}
                 className="min-w-0 flex-1 bg-transparent text-base placeholder:text-base-content/20 focus:outline-none"
                 required
               />
@@ -77,7 +93,7 @@ function RegisterPage() {
               </button>
             </div>
 
-            <p className="mt-2 text-xs font-black uppercase tracking-[0.15em] text-base-content/40">
+            <p className="mt-1.5 text-xs text-base-content/50">
               Minimum 6 characters
             </p>
           </div>
@@ -101,9 +117,7 @@ function RegisterPage() {
                 onClick={() => setShowConfirmPassword((current) => !current)}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-base-content/50 hover:text-primary"
                 aria-label={
-                  showConfirmPassword
-                    ? "Hide confirm password"
-                    : "Show confirm password"
+                  showConfirmPassword ? "Hide password" : "Show password"
                 }
               >
                 {showConfirmPassword ? (
@@ -120,37 +134,19 @@ function RegisterPage() {
             disabled={isSubmitting}
             className="btn btn-primary h-13 w-full rounded-lg text-base font-black shadow-lg shadow-primary/20"
           >
-            {isSubmitting ? "Creating account..." : "Sign Up"}
+            {isSubmitting ? "Creating account..." : "Create Account"}
             {!isSubmitting && <ArrowRight className="h-5 w-5" />}
           </button>
         </div>
-
-        <div className="my-9 flex items-center gap-5">
-          <div className="h-px flex-1 bg-base-300" />
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-base-content/30">
-            Or continue with
-          </p>
-          <div className="h-px flex-1 bg-base-300" />
-        </div>
-
-        <button
-          type="button"
-          className="btn h-11.5 w-full rounded-lg border-base-300 bg-base-100 text-base font-medium text-base-content/80 hover:border-primary hover:bg-base-100"
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-neutral text-xs font-black text-neutral-content">
-            G
-          </span>
-          Sign up with Google
-        </button>
       </Form>
 
       <p className="mt-10 text-center text-sm text-base-content/70">
         Already have an account?{" "}
         <Link
-          to="/auth/login"
+          to={`/auth/login?redirectTo=${encodeURIComponent(redirectTo)}`}
           className="font-bold text-primary hover:underline"
         >
-          Log in
+          Sign in
         </Link>
       </p>
     </section>
