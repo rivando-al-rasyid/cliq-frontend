@@ -1,39 +1,27 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Link as LinkIcon,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
+import { Link, useLoaderData } from "react-router";
 
 import LinkCard from "../components/LinkCard";
-const links = [
-  {
-    shortUrl: "shrt.lnk/aB3x9",
-    originalUrl: "https://www.architecturaldigest.com/story/modern-mini...",
-    date: "OCT 24, 2023",
-    clicks: "1.2K",
-  },
-  {
-    shortUrl: "shrt.lnk/v9Pq2",
-    originalUrl: "https://medium.com/design-ethics/the-future-of-headle...",
-    date: "OCT 21, 2023",
-    clicks: "842",
-  },
-  {
-    shortUrl: "shrt.lnk/zR4t1",
-    originalUrl: "https://github.com/frameworks/modern-stack-documen...",
-    date: "OCT 19, 2023",
-    clicks: "2.4K",
-  },
-  {
-    shortUrl: "shrt.lnk/mL5k8",
-    originalUrl: "https://dribbble.com/shots/21435678-Fintech-Dashboar...",
-    date: "OCT 15, 2023",
-    clicks: "341",
-  },
-];
 
 function DashboardPage() {
+  const {
+    links = [],
+    totalActive = 0,
+    page = 1,
+    totalPages = 1,
+    error = "",
+  } = useLoaderData() || {};
+
+  const hasLinks = links.length > 0;
+  const previousPage = Math.max(Number(page) - 1, 1);
+  const nextPage = Math.min(Number(page) + 1, Number(totalPages));
+
   return (
     <section className="bg-base-200">
       <div className="mx-auto max-w-3xl px-5 py-10 md:py-12">
@@ -51,7 +39,9 @@ function DashboardPage() {
             <p className="text-sm font-black uppercase tracking-[0.25em] text-base-content/60">
               Total Active
             </p>
-            <p className="mt-1 text-3xl font-black text-primary">124</p>
+            <p className="mt-1 text-3xl font-black text-primary">
+              {totalActive}
+            </p>
           </div>
         </div>
 
@@ -64,36 +54,71 @@ function DashboardPage() {
             className="input w-full border-0 bg-transparent text-base focus:outline-none"
           />
 
-          <button className="btn btn-ghost btn-sm">
+          <button className="btn btn-ghost btn-sm" type="button">
             <SlidersHorizontal className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="mt-10 space-y-5">
-          {links.map((link) => (
-            <LinkCard key={link.shortUrl} link={link} />
-          ))}
-        </div>
-
-        <div className="mt-14 flex items-center justify-between text-sm font-bold text-base-content/60">
-          <button className="btn btn-ghost btn-sm gap-1 px-0">
-            <ChevronLeft className="h-4 w-4" />
-            Prev Page
-          </button>
-
-          <div className="flex items-center gap-5">
-            <span className="rounded-lg bg-primary/10 px-3 py-2 font-black text-primary">
-              1
-            </span>
-            <span>of</span>
-            <span className="font-black text-base-content">5</span>
+        {error && (
+          <div className="alert alert-error mt-8">
+            <span>{error}</span>
           </div>
+        )}
 
-          <button className="btn btn-ghost btn-sm gap-1 px-0">
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <div className="mt-10 space-y-5">
+          {hasLinks ? (
+            links.map((link) => <LinkCard key={link.id || link.slug} link={link} />)
+          ) : (
+            <div className="rounded-2xl border border-dashed border-base-300 bg-base-100 p-10 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <LinkIcon className="h-7 w-7" />
+              </div>
+
+              <h2 className="mt-5 text-xl font-black">No links yet</h2>
+              <p className="mt-2 text-sm text-base-content/60">
+                Create your first short link and it will appear here.
+              </p>
+
+              <Link to="/dashboard/create" className="btn btn-primary mt-6">
+                Create Link
+              </Link>
+            </div>
+          )}
         </div>
+
+        {hasLinks && (
+          <div className="mt-14 flex items-center justify-between text-sm font-bold text-base-content/60">
+            <Link
+              to={`?page=${previousPage}`}
+              className={`btn btn-ghost btn-sm gap-1 px-0 ${
+                Number(page) <= 1 ? "pointer-events-none opacity-40" : ""
+              }`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Prev Page
+            </Link>
+
+            <div className="flex items-center gap-5">
+              <span className="rounded-lg bg-primary/10 px-3 py-2 font-black text-primary">
+                {page}
+              </span>
+              <span>of</span>
+              <span className="font-black text-base-content">{totalPages}</span>
+            </div>
+
+            <Link
+              to={`?page=${nextPage}`}
+              className={`btn btn-ghost btn-sm gap-1 px-0 ${
+                Number(page) >= Number(totalPages)
+                  ? "pointer-events-none opacity-40"
+                  : ""
+              }`}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

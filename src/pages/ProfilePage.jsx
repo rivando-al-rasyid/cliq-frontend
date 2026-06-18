@@ -1,15 +1,10 @@
 import { Bell, Link2, LogOut, Pencil, Shield, UserRound } from "lucide-react";
-import { Link, useNavigate } from "react-router";
-
-import { clearAccessToken } from "../utils/auth";
+import { Form, Link, useRouteLoaderData } from "react-router";
 
 function ProfilePage() {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    clearAccessToken();
-    navigate("/auth/login", { replace: true });
-  };
+  const { user } = useRouteLoaderData("dashboard") || {};
+  const displayName = user?.fullName || user?.name || user?.email || "ShortLink User";
+  const email = user?.email || "-";
 
   return (
     <section className="bg-base-200">
@@ -39,9 +34,9 @@ function ProfilePage() {
             </div>
 
             <div>
-              <h2 className="text-xl font-black">Alex Thompson</h2>
+              <h2 className="text-xl font-black">{displayName}</h2>
               <p className="mt-1 text-base text-base-content/70">
-                Product Architect at Digital Flow
+                Authenticated ShortLink account
               </p>
             </div>
           </div>
@@ -52,7 +47,7 @@ function ProfilePage() {
                 Email Address
               </p>
               <p className="mt-2 font-medium text-base-content">
-                user@example.com
+                {email}
               </p>
             </div>
 
@@ -118,14 +113,15 @@ function ProfilePage() {
 
           <div className="divider my-8" />
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="btn btn-outline w-full border-base-300 text-base-content/70 hover:border-error hover:bg-error hover:text-error-content"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout Session
-          </button>
+          <Form method="post" action="/logout">
+            <button
+              type="submit"
+              className="btn btn-outline w-full border-base-300 text-base-content/70 hover:border-error hover:bg-error hover:text-error-content"
+            >
+              <LogOut className="h-5 w-5" />
+              Logout Session
+            </button>
+          </Form>
         </div>
 
         <p className="mt-10 text-center text-sm text-base-content/40">

@@ -1,16 +1,46 @@
 import { redirect } from "react-router";
 
-import { isAuthenticated, rememberPendingUrl } from "./auth";
+import {
+  API_URL,
+  apiRequest,
+  extractApiData,
+  getApiMessage,
+  parseApiResponse,
+} from "./api";
+import { getCurrentUser, rememberPendingUrl } from "./auth";
 
-function createRandomSlug() {
-  return Math.random().toString(36).slice(2, 8);
-}
+const RESERVED_SLUGS = new Set([
+  "api",
+  "login",
+  "register",
+  "dashboard",
+  "auth",
+  "link",
+  "profile",
+  "swagger",
+  "img",
+]);
 
 function normalizeSlug(value) {
-  return String(value || "")
-    .trim()
-    .replaceAll(" ", "-")
-    .toLowerCase();
+  return String(value || "").trim().replaceAll(" ", "-");
+}
+
+function validateSlug(value) {
+  if (!value) return "";
+
+  if (value.length < 3 || value.length > 50) {
+    return "Slug must be 3-50 characters.";
+  }
+
+  if (!/^[A-Za-z0-9-]+$/.test(value)) {
+    return "Slug can only contain letters, numbers, and hyphens.";
+  }
+
+  if (RESERVED_SLUGS.has(value.toLowerCase())) {
+    return "This slug is reserved. Please use another slug.";
+  }
+
+  return "";
 }
 
 function isValidHttpUrl(value) {
@@ -20,6 +50,11 @@ function isValidHttpUrl(value) {
   } catch {
     return false;
   }
+}
+
+function fallbackShortUrl(slug) {
+  const baseUrl = import.meta.env.VITE_SHORT_URL_BASE || API_URL;
+  return `${baseUrl.replace(/\/$/, "")}/${slug}`;
 }
 
 export async function homeShortenAction({ request }) {
@@ -40,7 +75,9 @@ export async function homeShortenAction({ request }) {
 
   rememberPendingUrl(destinationUrl);
 
-  if (isAuthenticated()) {
+  const user = await getCurrentUser();
+
+  if (user) {
     throw redirect("/dashboard/create");
   }
 
@@ -68,22 +105,73 @@ export async function createLinkAction({ request }) {
     };
   }
 
-  if (customSlug && !/^[a-z0-9-]+$/.test(customSlug)) {
+  const slugError = validateSlug(customSlug);
+  if (slugError) {
     return {
-      error: "Slug can only contain letters, numbers, and hyphens.",
+      error: slugError,
     };
   }
 
-  const slug = customSlug || createRandomSlug();
-  const shortUrl = `https://short.link/${slug}`;
+  const body = {
+    origin_link: destinationUrl,
+  };
 
-  // TODO: Replace this local result with your backend request when the endpoint is ready.
-  // Example shape:
-  // await fetch(`${API_URL}/links`, { method: "POST", body: JSON.stringify({ destinationUrl, slug }) })
+  if (customSlug) {
+    body.slug = customSlug;
+  }
+
+  const res = await apiRequest("/link/create", {
+    method: "POST",
+    body,
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    throw redirect("/auth/login?redirectTo=/dashboard/create");
+  }
+
+  const result = await parseApiResponse(res);
+
+  if (!res.ok || result?.isSuccess === false) {
+    return {
+      error: getApiMessage(result, "Failed to create short link."),
+    };
+  }
+
+  const data = extractApiData(result) || {};
+  const slug = data.slug || customSlug;
+
   return {
     success: true,
-    destinationUrl,
+    destinationUrl: data.origin_link || destinationUrl,
     slug,
-    shortUrl,
+    shortUrl: data.short_url || fallbackShortUrl(slug),
   };
+}
+
+export async function deleteLinkAction({ params, request }) {
+  const linkID = params.id;
+
+  if (!linkID) {
+    return {
+      error: "Invalid link id.",
+    };
+  }
+
+  const res = await apiRequest(`/link/${linkID}`, {
+    method: "DELETE",
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    const url = new URL(request.url);
+    throw redirect(`/auth/login?redirectTo=${encodeURIComponent(url.pathname)}`);
+  }
+
+  if (!res.ok) {
+    const result = await parseApiResponse(res);
+    return {
+      error: getApiMessage(result, "Failed to delete link."),
+    };
+  }
+
+  return redirect("/dashboard");
 }

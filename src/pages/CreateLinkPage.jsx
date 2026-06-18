@@ -10,10 +10,15 @@ import {
 } from "react-router";
 
 import { takePendingUrl } from "../utils/auth";
+import { API_URL } from "../utils/api";
 import { showCreatedLinkAlert, showToast } from "../utils/sweetAlert";
 
 function normalizeSlug(value) {
-  return value.trim().replaceAll(" ", "-").toLowerCase();
+  return value.trim().replaceAll(" ", "-");
+}
+
+function getShortUrlBase() {
+  return (import.meta.env.VITE_SHORT_URL_BASE || API_URL).replace(/\/$/, "");
 }
 
 function CreateLinkPage() {
@@ -65,8 +70,9 @@ function CreateLinkPage() {
     });
   }, [actionData, navigate]);
 
+  const shortUrlBase = getShortUrlBase();
   const previewSlug = useMemo(
-    () => normalizeSlug(slugPreview) || "my-custom-slug",
+    () => normalizeSlug(slugPreview) || "aB3x9K",
     [slugPreview],
   );
 
@@ -125,7 +131,7 @@ function CreateLinkPage() {
 
             <div className="mt-4 flex overflow-hidden rounded-lg border border-base-300 bg-base-100">
               <span className="flex items-center border-r border-base-300 bg-base-200 px-5 text-sm font-medium text-base-content/70">
-                short.link/
+                {shortUrlBase}/
               </span>
 
               <input
@@ -133,15 +139,17 @@ function CreateLinkPage() {
                 name="slug"
                 value={slugPreview}
                 onChange={(event) => setSlugPreview(event.target.value)}
-                placeholder="my-custom-slug"
+                placeholder="aB3x9K"
                 className="input h-14 min-w-0 flex-1 border-0 bg-base-100 text-base placeholder:text-base-content/30 focus:outline-none"
+                minLength={3}
+                maxLength={50}
                 pattern="[A-Za-z0-9-]+"
-                title="Use letters, numbers, and hyphens only"
+                title="Use 3-50 letters, numbers, and hyphens only"
               />
             </div>
 
             <p className="mt-3 text-xs italic text-base-content/50">
-              Leave blank to generate a random unique identifier.
+              Leave blank and the system will generate a random unique slug.
             </p>
           </div>
 
@@ -154,7 +162,7 @@ function CreateLinkPage() {
             <p className="mt-3 pl-8 text-base font-medium">
               Your short link will be:{" "}
               <span className="font-black text-primary">
-                https://short.link/{previewSlug}
+                {shortUrlBase}/{previewSlug}
               </span>
             </p>
           </div>
