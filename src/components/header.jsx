@@ -1,18 +1,12 @@
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { Form, NavLink, useLocation } from "react-router";
 import { Plus, UserRound } from "lucide-react";
 
-import { clearAccessToken, isAuthenticated } from "../utils/auth";
-
-function Header() {
-  const navigate = useNavigate();
+function Header({ isAuthenticated = false }) {
   const location = useLocation();
 
-  const isAuth = isAuthenticated();
-
-  const handleLogout = () => {
-    clearAccessToken();
-    navigate("/auth/login", { replace: true });
-  };
+  const redirectTarget = encodeURIComponent(
+    location.pathname === "/" ? "/dashboard" : `${location.pathname}${location.search}`,
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b border-base-300 bg-base-100">
@@ -23,7 +17,7 @@ function Header() {
           </NavLink>
         </div>
 
-        {isAuth && (
+        {isAuthenticated && (
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal gap-4 px-1 text-sm font-medium">
               <li>
@@ -70,7 +64,7 @@ function Header() {
         )}
 
         <div className="navbar-end gap-4">
-          {isAuth ? (
+          {isAuthenticated ? (
             <>
               <NavLink
                 to="/dashboard/create"
@@ -88,29 +82,26 @@ function Header() {
                 <UserRound className="h-5 w-5" />
               </NavLink>
 
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="btn btn-ghost btn-sm text-base-content/60"
-              >
-                Logout
-              </button>
+              <Form method="post" action="/logout">
+                <button
+                  type="submit"
+                  className="btn btn-ghost btn-sm text-base-content/60"
+                >
+                  Logout
+                </button>
+              </Form>
             </>
           ) : (
             <>
               <NavLink
-                to={`/auth/login?redirectTo=${encodeURIComponent(
-                  location.pathname === "/" ? "/dashboard" : location.pathname,
-                )}`}
+                to={`/auth/login?redirectTo=${redirectTarget}`}
                 className="btn btn-ghost btn-sm text-base-content/60"
               >
                 Login
               </NavLink>
 
               <NavLink
-                to={`/auth/register?redirectTo=${encodeURIComponent(
-                  location.pathname === "/" ? "/dashboard" : location.pathname,
-                )}`}
+                to={`/auth/register?redirectTo=${redirectTarget}`}
                 className="btn btn-primary btn-sm"
               >
                 Register

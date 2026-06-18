@@ -1,44 +1,51 @@
 import { redirect } from "react-router";
 
-import { getSafeRedirectPath, setAccessToken, setFlashMessage } from "./auth";
-
-const API_URL = "http://localhost:8080";
+import { apiRequest, getApiMessage, parseApiResponse } from "./api";
+import { getSafeRedirectPath, setFlashMessage } from "./auth";
 
 export async function loginAction({ request }) {
   const formData = await request.formData();
   const currentUrl = new URL(request.url);
 
-  const email = formData.get("email");
-  const password = formData.get("password");
+  const email = String(formData.get("email") || "").trim();
+  const password = String(formData.get("password") || "");
   const redirectTo = getSafeRedirectPath(
     currentUrl.searchParams.get("redirectTo"),
     "/dashboard",
   );
 
-  const res = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
-  });
-
-  const result = await res.json().catch(() => null);
-
-  if (!res.ok || !result?.isSuccess || !result?.data) {
+  if (!email || !password) {
     return {
-      error:
-        result?.message ||
-        "Login failed. Please check your email and password.",
+      error: "Email and password are required.",
     };
   }
 
-  setAccessToken(result.data);
+  const res = await apiRequest("/auth/login", {
+    method: "POST",
+    body: {
+      email,
+      password,
+    },
+  });
+
+  const result = await parseApiResponse(res);
+
+  if (!res.ok || result?.isSuccess === false) {
+    return {
+      error: getApiMessage(
+        result,
+        "Login failed. Please check your email and password.",
+      ),
+    };
+  }
+
+  // No localStorage here. The backend should set an HttpOnly cookie through
+  // Set-Cookie, and the browser will send it on future requests automatically.
   setFlashMessage("auth", "Login successful. Welcome back!");
-  setFlashMessage("login-modal", "You are signed in. You can create a short link now.");
+  setFlashMessage(
+    "login-modal",
+    "You are signed in. You can create a short link now.",
+  );
 
   return redirect(redirectTo);
 }
@@ -47,42 +54,45 @@ export async function registerAction({ request }) {
   const formData = await request.formData();
   const currentUrl = new URL(request.url);
 
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const confirmPassword = formData.get("confirmPassword");
+  const email = String(formData.get("email") || "").trim();
+  const password = String(formData.get("password") || "");
+  const confirmPassword = String(formData.get("confirmPassword") || "");
   const redirectTo = getSafeRedirectPath(
     currentUrl.searchParams.get("redirectTo"),
     "/dashboard",
   );
 
-  if (password.length < 6) {
+  if (!email || !password || !confirmPassword) {
     return {
-      error: "Password minimum 6 characters",
+      error: "Email, password, and confirm password are required.",
+    };
+  }
+
+  if (password.length < 8) {
+    return {
+      error: "Password minimum 8 characters.",
     };
   }
 
   if (password !== confirmPassword) {
     return {
-      error: "Passwords do not match",
+      error: "Passwords do not match.",
     };
   }
 
-  const res = await fetch(`${API_URL}/auth/register`, {
+  const res = await apiRequest("/auth/register", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+    body: {
       email,
       password,
-    }),
+    },
   });
 
-  const result = await res.json().catch(() => null);
+  const result = await parseApiResponse(res);
 
-  if (!res.ok) {
+  if (!res.ok || result?.isSuccess === false) {
     return {
-      error: result?.message || "Register failed. Please try again.",
+      error: getApiMessage(result, "Register failed. Please try again."),
     };
   }
 
@@ -91,4 +101,17 @@ export async function registerAction({ request }) {
   return redirect(
     `/auth/login?registered=1&redirectTo=${encodeURIComponent(redirectTo)}`,
   );
+}
+
+export async function logoutAction() {
+  try {
+    await apiRequest("/auth/logout", {
+      method: "POST",
+    });
+  } catch {
+    // Even if the request fails, redirect away from protected UI.
+    // The protected loader will still block access if the cookie is valid.
+  }
+
+  return redirect("/auth/login");
 }

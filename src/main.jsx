@@ -14,14 +14,24 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import CreateLinkPage from "./pages/CreateLinkPage";
 
-import { loginAction, registerAction } from "./utils/auth.action";
-import { createLinkAction, homeShortenAction } from "./utils/link.action";
-import { guestOnlyLoader, requireAuthLoader } from "./utils/auth";
+import { loginAction, logoutAction, registerAction } from "./utils/auth.action";
+import {
+  createLinkAction,
+  deleteLinkAction,
+  homeShortenAction,
+} from "./utils/link.action";
+import { dashboardLinksLoader } from "./utils/link.loader";
+import {
+  guestOnlyLoader,
+  optionalAuthLoader,
+  requireAuthLoader,
+} from "./utils/auth";
 
 const router = createBrowserRouter([
   {
     path: "/",
     Component: LandingPage,
+    loader: optionalAuthLoader,
     action: homeShortenAction,
   },
   {
@@ -43,12 +53,14 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
+    id: "dashboard",
     Component: AppLayout,
     loader: requireAuthLoader,
     children: [
       {
         index: true,
         Component: DashboardPage,
+        loader: dashboardLinksLoader,
       },
       {
         path: "profile",
@@ -59,7 +71,15 @@ const router = createBrowserRouter([
         Component: CreateLinkPage,
         action: createLinkAction,
       },
+      {
+        path: "links/:id/delete",
+        action: deleteLinkAction,
+      },
     ],
+  },
+  {
+    path: "/logout",
+    action: logoutAction,
   },
 ]);
 

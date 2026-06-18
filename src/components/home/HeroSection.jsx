@@ -2,10 +2,10 @@ import { useEffect } from "react";
 import { Form, useActionData, useNavigate, useNavigation } from "react-router";
 import { Link as LinkIcon } from "lucide-react";
 
-import { isAuthenticated, rememberPendingUrl } from "../../utils/auth";
+import { rememberPendingUrl } from "../../utils/auth";
 import { showAuthRequiredAlert, showToast } from "../../utils/sweetAlert";
 
-function HeroSection() {
+function HeroSection({ isAuthenticated = false }) {
   const navigate = useNavigate();
   const actionData = useActionData();
   const navigation = useNavigation();
@@ -27,7 +27,7 @@ function HeroSection() {
   };
 
   const handleGetStarted = () => {
-    if (isAuthenticated()) {
+    if (isAuthenticated) {
       navigate("/dashboard/create");
       return;
     }
@@ -59,7 +59,11 @@ function HeroSection() {
       </p>
 
       <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-        <button type="button" onClick={handleGetStarted} className="btn btn-primary px-8">
+        <button
+          type="button"
+          onClick={handleGetStarted}
+          className="btn btn-primary px-8"
+        >
           Get Started
         </button>
         <a

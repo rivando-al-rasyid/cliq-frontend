@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Form, Link, useActionData, useNavigation, useSearchParams } from "react-router";
 
@@ -6,7 +6,7 @@ import { getSafeRedirectPath, takeFlashMessage } from "../utils/auth";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [infoMessage, setInfoMessage] = useState("");
+  const [registerMessage] = useState(() => takeFlashMessage("register"));
   const [searchParams] = useSearchParams();
 
   const redirectTo = getSafeRedirectPath(searchParams.get("redirectTo"), "/dashboard");
@@ -15,14 +15,11 @@ function LoginPage() {
   const navigation = useNavigation();
 
   const isSubmitting = navigation.state === "submitting";
-
-  useEffect(() => {
-    const registerMessage = takeFlashMessage("register");
-
-    if (registerMessage || searchParams.get("registered") === "1") {
-      setInfoMessage(registerMessage || "Account created. Please log in to continue.");
-    }
-  }, [searchParams]);
+  const infoMessage =
+    registerMessage ||
+    (searchParams.get("registered") === "1"
+      ? "Account created. Please log in to continue."
+      : "");
 
   return (
     <section className="w-full max-w-md">

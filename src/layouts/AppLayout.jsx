@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLoaderData, useLocation, useNavigate } from "react-router";
 
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -7,6 +7,7 @@ import { takeFlashMessage } from "../utils/auth";
 import { showLoginSuccessAlert, showToast } from "../utils/sweetAlert";
 
 function AppLayout() {
+  const { user } = useLoaderData() || {};
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,7 +30,7 @@ function AppLayout() {
 
   return (
     <main className="flex min-h-screen flex-col bg-base-200 text-base-content">
-      <Header />
+      <Header isAuthenticated user={user} />
 
       <div className="flex-1">
         <Outlet />

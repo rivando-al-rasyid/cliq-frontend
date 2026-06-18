@@ -74,7 +74,7 @@ function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="••••••••"
-                minLength={6}
+                minLength={8}
                 className="min-w-0 flex-1 bg-transparent text-base placeholder:text-base-content/20 focus:outline-none"
                 required
               />
@@ -94,7 +94,7 @@ function RegisterPage() {
             </div>
 
             <p className="mt-1.5 text-xs text-base-content/50">
-              Minimum 6 characters
+              Minimum 8 characters
             </p>
           </div>
 
