@@ -12,6 +12,8 @@ import DashboardPage from "./pages/DashboardPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 
+import { loginAction, registerAction } from "./utils/auth.action";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -24,10 +26,12 @@ const router = createBrowserRouter([
       {
         path: "register",
         Component: RegisterPage,
+        action: registerAction,
       },
       {
         path: "login",
         Component: LoginPage,
+        action: loginAction,
       },
     ],
   },

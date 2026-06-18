@@ -1,27 +1,14 @@
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router";
+import { Form, Link, useActionData, useNavigation } from "react-router";
 
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const actionData = useActionData();
+  const navigation = useNavigation();
 
-  const handleChange = (e) => {
-    setForm((current) => ({
-      ...current,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    console.log("Login data:", form);
-  };
+  const isSubmitting = navigation.state === "submitting";
 
   return (
     <section className="w-full max-w-md">
@@ -29,8 +16,8 @@ function LoginPage() {
         ShortLink
       </h1>
 
-      <form
-        onSubmit={handleSubmit}
+      <Form
+        method="post"
         className="mt-10 rounded-lg border border-base-300 bg-base-100 p-8 shadow-xl shadow-base-300/40"
       >
         <div>
@@ -39,6 +26,12 @@ function LoginPage() {
             Please enter your details to sign in.
           </p>
         </div>
+
+        {actionData?.error && (
+          <div className="alert alert-error mt-6 rounded-lg text-sm">
+            {actionData.error}
+          </div>
+        )}
 
         <div className="mt-9 space-y-6">
           <div>
@@ -49,43 +42,40 @@ function LoginPage() {
             <input
               type="email"
               name="email"
-              value={form.email}
-              onChange={handleChange}
               placeholder="name@company.com"
-              className="input input-bordered mt-3 h-[46px] w-full rounded-lg border-base-300 bg-base-100 text-base placeholder:text-base-content/20 focus:border-primary focus:outline-none"
+              className="input input-bordered mt-3 h-11.5 w-full rounded-lg border-base-300 bg-base-100 text-base placeholder:text-base-content/20 focus:border-primary focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-base-content/80">
+            <div className="flex items-center justify-between gap-3">
+              <label className="text-sm font-bold leading-none text-base-content/80">
                 Password
               </label>
 
               <Link
-                to="/forgot-password"
-                className="text-sm font-bold text-primary hover:underline"
+                to="/auth/forgot-password"
+                className="text-sm font-bold leading-none text-primary hover:underline"
               >
                 Forgot password?
               </Link>
             </div>
 
-            <div className="input input-bordered mt-3 flex h-[46px] items-center gap-3 rounded-lg border-base-300 bg-base-100 focus-within:border-primary">
+            <div className="mt-3 flex h-11.5 w-full items-center rounded-lg border border-base-300 bg-base-100 px-3 focus-within:border-primary">
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                value={form.password}
-                onChange={handleChange}
                 placeholder="••••••••"
-                className="grow bg-transparent text-base placeholder:text-base-content/20 focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent text-base placeholder:text-base-content/20 focus:outline-none"
                 required
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword((current) => !current)}
-                className="text-base-content/50 hover:text-primary"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-base-content/50 hover:text-primary"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -96,9 +86,13 @@ function LoginPage() {
             </div>
           </div>
 
-          <button className="btn btn-primary h-[52px] w-full rounded-lg text-base font-black shadow-lg shadow-primary/20">
-            Log In
-            <ArrowRight className="h-5 w-5" />
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn btn-primary h-13 w-full rounded-lg text-base font-black shadow-lg shadow-primary/20"
+          >
+            {isSubmitting ? "Logging in..." : "Log In"}
+            {!isSubmitting && <ArrowRight className="h-5 w-5" />}
           </button>
         </div>
 
@@ -112,18 +106,21 @@ function LoginPage() {
 
         <button
           type="button"
-          className="btn h-[46px] w-full rounded-lg border-base-300 bg-base-100 text-base font-medium text-base-content/80 hover:border-primary hover:bg-base-100"
+          className="btn h-11.5 w-full rounded-lg border-base-300 bg-base-100 text-base font-medium text-base-content/80 hover:border-primary hover:bg-base-100"
         >
           <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-neutral text-xs font-black text-neutral-content">
             G
           </span>
           Sign in with Google
         </button>
-      </form>
+      </Form>
 
       <p className="mt-10 text-center text-sm text-base-content/70">
-        Don&apos;t have an account?{" "}
-        <Link to="/register" className="font-bold text-primary hover:underline">
+        Don't have an account?{" "}
+        <Link
+          to="/auth/register"
+          className="font-bold text-primary hover:underline"
+        >
           Sign up
         </Link>
       </p>
