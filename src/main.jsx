@@ -11,17 +11,23 @@ import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
+import CreateLinkPage from "./pages/CreateLinkPage";
 
 import { loginAction, registerAction } from "./utils/auth.action";
+import { createLinkAction, homeShortenAction } from "./utils/link.action";
+import { guestOnlyLoader, requireAuthLoader } from "./utils/auth";
 
 const router = createBrowserRouter([
   {
     path: "/",
     Component: LandingPage,
+    action: homeShortenAction,
   },
   {
     path: "/auth",
     Component: AuthLayout,
+    loader: guestOnlyLoader,
     children: [
       {
         path: "register",
@@ -38,10 +44,20 @@ const router = createBrowserRouter([
   {
     path: "/dashboard",
     Component: AppLayout,
+    loader: requireAuthLoader,
     children: [
       {
         index: true,
         Component: DashboardPage,
+      },
+      {
+        path: "profile",
+        Component: ProfilePage,
+      },
+      {
+        path: "create",
+        Component: CreateLinkPage,
+        action: createLinkAction,
       },
     ],
   },
